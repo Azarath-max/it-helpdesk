@@ -1,0 +1,31 @@
+from fastapi.testclient import TestClient
+
+
+def test_health_returns_ok(client: TestClient) -> None:
+    response = client.get("/health")
+
+    assert response.status_code == 200
+    assert response.json() == {"status": "ok"}
+    assert response.headers["X-Request-ID"]
+
+
+def test_request_id_is_echoed(client: TestClient) -> None:
+    response = client.get("/health", headers={"X-Request-ID": "test-request-id"})
+
+    assert response.headers["X-Request-ID"] == "test-request-id"
+
+
+def test_unknown_route_uses_error_envelope(client: TestClient) -> None:
+    response = client.get("/does-not-exist")
+
+    assert response.status_code == 404
+    body = response.json()
+    assert body["error"]["code"] == "NOT_FOUND"
+    assert body["error"]["requestId"]
+
+
+def test_ready_checks_database(client: TestClient) -> None:
+    response = client.get("/ready")
+
+    assert response.status_code == 200
+    assert response.json() == {"status": "ready"}
