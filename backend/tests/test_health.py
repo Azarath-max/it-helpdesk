@@ -1,3 +1,4 @@
+import pytest
 from fastapi.testclient import TestClient
 
 
@@ -29,3 +30,28 @@ def test_ready_checks_database(client: TestClient) -> None:
 
     assert response.status_code == 200
     assert response.json() == {"status": "ready"}
+
+
+def test_ready_uses_error_envelope_when_database_is_down(
+    client: TestClient,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    def fail() -> None:
+        raise RuntimeError("database down")
+
+    monkeypatch.setattr("app.api.system.check_database", fail)
+
+    response = client.get("/ready")
+
+    assert response.status_code == 503
+    body = response.json()
+    assert body["error"]["code"] == "NOT_READY"
+    assert body["error"]["requestId"]
+
+
+def test_security_headers_are_present(client: TestClient) -> None:
+    response = client.get("/health")
+
+    assert response.headers["X-Content-Type-Options"] == "nosniff"
+    assert response.headers["X-Frame-Options"] == "DENY"
+    assert response.headers["Referrer-Policy"] == "no-referrer"

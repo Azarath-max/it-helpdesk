@@ -11,7 +11,10 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Liveness check */
+        /**
+         * Liveness check
+         * @description Report that the API process is running.
+         */
         get: operations["health_health_get"];
         put?: never;
         post?: never;
@@ -28,7 +31,10 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Readiness check */
+        /**
+         * Readiness check
+         * @description Report that the API can reach PostgreSQL.
+         */
         get: operations["ready_ready_get"];
         put?: never;
         post?: never;
@@ -41,7 +47,32 @@ export interface paths {
 }
 export type webhooks = Record<string, never>;
 export interface components {
-    schemas: never;
+    schemas: {
+        /**
+         * HealthResponse
+         * @description Liveness response.
+         */
+        HealthResponse: {
+            /**
+             * Status
+             * @default ok
+             * @constant
+             */
+            status: "ok";
+        };
+        /**
+         * ReadyResponse
+         * @description Readiness response.
+         */
+        ReadyResponse: {
+            /**
+             * Status
+             * @default ready
+             * @constant
+             */
+            status: "ready";
+        };
+    };
     responses: never;
     parameters: never;
     requestBodies: never;
@@ -65,9 +96,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        [key: string]: string;
-                    };
+                    "application/json": components["schemas"]["HealthResponse"];
                 };
             };
         };
@@ -87,8 +116,15 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": unknown;
+                    "application/json": components["schemas"]["ReadyResponse"];
                 };
+            };
+            /** @description PostgreSQL is not reachable */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
         };
     };
