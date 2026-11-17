@@ -2,8 +2,8 @@
 
 A single-tenant IT helpdesk ticketing system built as a portfolio project.
 
-**Status:** Phase 2 complete. Scoped ticket creation, lists, filters, edits, and an append-only
-audit trail are live. Workflow transitions and comments are next.
+**Status:** Phase 3 complete. Enforced ticket workflow, assignment, public comments, and internal
+notes are live. Email notifications are next.
 
 ## What works today
 
@@ -17,7 +17,11 @@ audit trail are live. Workflow transitions and comments are next.
 - Role-based access control with an admin-only `GET /api/users` paginated endpoint.
 - Scoped ticket CRUD: requesters manage their own tickets, agents and admins see the full queue;
   status, priority, and text search filters; optimistic-concurrency edits.
-- An append-only `audit_events` table recording ticket creation and edits with before/after diffs.
+- Enforced ticket workflow: validated status transitions, assignment and claiming, reopen counters,
+  and resolution notes, all with optimistic concurrency.
+- Public comments and internal notes with soft deletion and role-based visibility.
+- An append-only `audit_events` table recording ticket creation, edits, transitions, assignment,
+  and comments with before/after diffs.
 - A React app with sign-in, registration, forgot/reset password, a protected dashboard, ticket
   lists, creation, and detail/editing.
 - Docker Compose for PostgreSQL 18 (host port 5433) and Mailpit.
@@ -110,5 +114,5 @@ docker-compose.yml
 
 ## Next phase
 
-Phase 3 adds the ticket workflow: enforced status transitions, assignment, comments, and internal
-notes. See the [MVP plan](docs/mvp-plan.md).
+Phase 4 adds email notifications: a transactional outbox, templates, worker, retries, and Mailpit
+previews. See the [MVP plan](docs/mvp-plan.md).

@@ -41,14 +41,16 @@ export function TextField({ label, hint, ...inputProps }: TextFieldProps) {
 export function SubmitButton({
   children,
   pending,
+  disabled = false,
 }: {
   children: ReactNode
   pending: boolean
+  disabled?: boolean
 }) {
   return (
     <button
       type="submit"
-      disabled={pending}
+      disabled={pending || disabled}
       className="inline-flex w-full items-center justify-center rounded-lg bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-700 disabled:cursor-not-allowed disabled:opacity-60"
     >
       {pending ? 'Working…' : children}

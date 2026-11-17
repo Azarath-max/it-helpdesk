@@ -33,7 +33,7 @@ export function HomePage() {
     <div className="space-y-10">
       <section className="space-y-4">
         <span className="inline-flex items-center rounded-full bg-slate-900/5 px-3 py-1 text-xs font-medium text-slate-700 ring-1 ring-inset ring-slate-900/10">
-          Phase 2 · Tickets and audit
+          Phase 3 · Workflow and comments
         </span>
         <div className="max-w-2xl space-y-3">
           <h1 className="text-3xl font-semibold tracking-tight text-slate-900 sm:text-4xl">

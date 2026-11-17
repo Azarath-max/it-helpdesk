@@ -33,6 +33,7 @@ class TicketRead(APIModel):
     status: TicketStatus
     priority: TicketPriority
     category: str | None
+    resolution_note: str | None
     source: TicketSource
     version: int
     requester: UserBrief
@@ -65,6 +66,27 @@ class TicketCreate(APIModel):
             return None
         cleaned = value.strip()
         return cleaned or None
+
+
+class TransitionTicketRequest(APIModel):
+    status: TicketStatus
+    version: int = Field(ge=1)
+    resolution_note: str | None = Field(default=None, max_length=5000)
+    reason: str | None = Field(default=None, max_length=2000)
+    comment: str | None = Field(default=None, min_length=1, max_length=5000)
+
+    @field_validator("resolution_note", "reason", "comment")
+    @classmethod
+    def normalize_text(cls, value: str | None) -> str | None:
+        if value is None:
+            return None
+        cleaned = value.strip()
+        return cleaned or None
+
+
+class AssignTicketRequest(APIModel):
+    assignee_id: uuid.UUID | None = None
+    version: int = Field(ge=1)
 
 
 class TicketUpdate(APIModel):

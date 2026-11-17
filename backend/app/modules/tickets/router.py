@@ -6,7 +6,16 @@ from fastapi import status as http_status
 
 from app.modules.auth.dependencies import CurrentUser, DbSession
 from app.modules.tickets.models import TicketPriority, TicketStatus
-from app.modules.tickets.schemas import TicketCreate, TicketRead, TicketUpdate
+from app.modules.tickets.schemas import (
+    AssignTicketRequest,
+    TicketCreate,
+    TicketRead,
+    TicketUpdate,
+    TransitionTicketRequest,
+)
+from app.modules.tickets.service import (
+    assign_ticket as assign_ticket_record,
+)
 from app.modules.tickets.service import (
     create_ticket as create_ticket_record,
 )
@@ -15,6 +24,9 @@ from app.modules.tickets.service import (
 )
 from app.modules.tickets.service import (
     list_tickets as list_ticket_records,
+)
+from app.modules.tickets.service import (
+    transition_ticket as transition_ticket_record,
 )
 from app.modules.tickets.service import (
     update_ticket as update_ticket_record,
@@ -107,6 +119,54 @@ def update_ticket(
 ) -> TicketRead:
     request_id, ip = _audit_context(request)
     ticket = update_ticket_record(
+        db,
+        actor,
+        ticket_id,
+        payload,
+        request_id=request_id,
+        ip=ip,
+    )
+    return TicketRead.model_validate(ticket)
+
+
+@router.patch(
+    "/{ticket_id}/status",
+    response_model=TicketRead,
+    summary="Transition a ticket to another status",
+)
+def transition_ticket(
+    ticket_id: uuid.UUID,
+    payload: TransitionTicketRequest,
+    request: Request,
+    db: DbSession,
+    actor: CurrentUser,
+) -> TicketRead:
+    request_id, ip = _audit_context(request)
+    ticket = transition_ticket_record(
+        db,
+        actor,
+        ticket_id,
+        payload,
+        request_id=request_id,
+        ip=ip,
+    )
+    return TicketRead.model_validate(ticket)
+
+
+@router.patch(
+    "/{ticket_id}/assign",
+    response_model=TicketRead,
+    summary="Assign or unassign a ticket",
+)
+def assign_ticket(
+    ticket_id: uuid.UUID,
+    payload: AssignTicketRequest,
+    request: Request,
+    db: DbSession,
+    actor: CurrentUser,
+) -> TicketRead:
+    request_id, ip = _audit_context(request)
+    ticket = assign_ticket_record(
         db,
         actor,
         ticket_id,

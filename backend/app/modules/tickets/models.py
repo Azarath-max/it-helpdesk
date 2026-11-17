@@ -75,6 +75,7 @@ class Ticket(Base):
         default=TicketPriority.MEDIUM,
     )
     category: Mapped[str | None] = mapped_column(String(60), nullable=True)
+    resolution_note: Mapped[str | None] = mapped_column(Text, nullable=True)
     source: Mapped[TicketSource] = mapped_column(
         Enum(TicketSource, name="ticket_source", values_callable=enum_values),
         nullable=False,

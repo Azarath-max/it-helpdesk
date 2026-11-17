@@ -9,6 +9,10 @@ export type TicketStatus = components['schemas']['TicketStatus']
 export type TicketPriority = components['schemas']['TicketPriority']
 export type TicketCreateInput = components['schemas']['TicketCreate']
 export type TicketUpdateInput = components['schemas']['TicketUpdate']
+export type TransitionTicketInput = components['schemas']['TransitionTicketRequest']
+export type AssignTicketInput = components['schemas']['AssignTicketRequest']
+export type Comment = components['schemas']['CommentRead']
+export type CommentCreateInput = components['schemas']['CommentCreate']
 
 export type TicketFilters = {
   status?: TicketStatus | ''
@@ -110,6 +114,115 @@ export function useUpdateTicket(id: string) {
     onSuccess: (ticket) => {
       queryClient.setQueryData(ticketDetailKey(id), ticket)
       queryClient.invalidateQueries({ queryKey: ticketsQueryKey })
+    },
+  })
+}
+
+export function useTransitionTicket(id: string) {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: async (input: TransitionTicketInput) => {
+      const { data, error, response } = await api.PATCH(
+        '/api/tickets/{ticket_id}/status',
+        {
+          params: { path: { ticket_id: id } },
+          body: input,
+        },
+      )
+      if (!response.ok || !data) {
+        throw toApiError(error, response.status)
+      }
+      return data
+    },
+    onSuccess: (ticket) => {
+      queryClient.setQueryData(ticketDetailKey(id), ticket)
+      queryClient.invalidateQueries({ queryKey: ticketsQueryKey })
+      queryClient.invalidateQueries({ queryKey: ['comments', id] })
+    },
+  })
+}
+
+export function useAssignTicket(id: string) {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: async (input: AssignTicketInput) => {
+      const { data, error, response } = await api.PATCH(
+        '/api/tickets/{ticket_id}/assign',
+        {
+          params: { path: { ticket_id: id } },
+          body: input,
+        },
+      )
+      if (!response.ok || !data) {
+        throw toApiError(error, response.status)
+      }
+      return data
+    },
+    onSuccess: (ticket) => {
+      queryClient.setQueryData(ticketDetailKey(id), ticket)
+      queryClient.invalidateQueries({ queryKey: ticketsQueryKey })
+    },
+  })
+}
+
+export function useComments(id: string) {
+  return useQuery({
+    queryKey: ['comments', id],
+    queryFn: async () => {
+      const { data, error, response } = await api.GET(
+        '/api/tickets/{ticket_id}/comments',
+        {
+          params: { path: { ticket_id: id }, query: { page: 1, pageSize: 100 } },
+        },
+      )
+      if (!response.ok || !data) {
+        throw toApiError(error, response.status)
+      }
+      return data
+    },
+  })
+}
+
+export function useCreateComment(id: string) {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: async (input: CommentCreateInput) => {
+      const { data, error, response } = await api.POST(
+        '/api/tickets/{ticket_id}/comments',
+        {
+          params: { path: { ticket_id: id } },
+          body: input,
+        },
+      )
+      if (!response.ok || !data) {
+        throw toApiError(error, response.status)
+      }
+      return data
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['comments', id] })
+    },
+  })
+}
+
+export function useDeleteComment() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: async (commentId: string) => {
+      const { error, response } = await api.DELETE('/api/comments/{comment_id}', {
+        params: { path: { comment_id: commentId } },
+      })
+      if (!response.ok) {
+        throw toApiError(error, response.status)
+      }
+    },
+    onSuccess: () => {
+      // Invalidate all comment lists; the ticket id is not available here.
+      queryClient.invalidateQueries({ queryKey: ['comments'] })
     },
   })
 }

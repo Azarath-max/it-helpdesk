@@ -2,7 +2,7 @@
 
 import enum
 import uuid
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import Any
 
 from sqlalchemy import func, or_, select, text
@@ -10,13 +10,19 @@ from sqlalchemy.orm import Session, selectinload
 
 from app.core.errors import AppError
 from app.modules.audit.service import record_audit
+from app.modules.comments.models import Comment, CommentVisibility
 from app.modules.tickets.models import (
     Ticket,
     TicketPriority,
     TicketSource,
     TicketStatus,
 )
-from app.modules.tickets.schemas import TicketCreate, TicketUpdate
+from app.modules.tickets.schemas import (
+    AssignTicketRequest,
+    TicketCreate,
+    TicketUpdate,
+    TransitionTicketRequest,
+)
 from app.modules.users.models import User, UserRole
 
 STAFF_ROLES = frozenset({UserRole.AGENT, UserRole.ADMIN})
@@ -27,6 +33,7 @@ AUDITED_TICKET_FIELDS = (
     "status",
     "priority",
     "category",
+    "resolution_note",
     "requester_id",
     "assignee_id",
     "version",
@@ -123,6 +130,7 @@ def get_ticket_for_actor(db: Session, actor: User, ticket_id: uuid.UUID) -> Tick
     ticket = db.scalar(select(Ticket).options(*_TICKET_LOAD_OPTIONS).where(Ticket.id == ticket_id))
     if ticket is None or not _can_view(actor, ticket):
         raise AppError("TICKET_NOT_FOUND", "Ticket not found", status_code=404)
+    db.refresh(ticket, attribute_names=["requester", "assignee"])
     return ticket
 
 
@@ -218,6 +226,269 @@ def update_ticket(
     record_audit(
         db,
         action="ticket.updated",
+        entity_type="ticket",
+        entity_id=ticket.id,
+        actor=actor,
+        before=before,
+        after=after,
+        request_id=request_id,
+        ip=ip,
+    )
+    db.commit()
+
+    return get_ticket_for_actor(db, actor, ticket.id)
+
+
+_TRANSITION_RULES: dict[tuple[TicketStatus, TicketStatus], set[UserRole]] = {
+    (TicketStatus.OPEN, TicketStatus.IN_PROGRESS): {UserRole.AGENT, UserRole.ADMIN},
+    (TicketStatus.OPEN, TicketStatus.CLOSED): {UserRole.AGENT, UserRole.ADMIN},
+    (TicketStatus.IN_PROGRESS, TicketStatus.WAITING_ON_USER): {
+        UserRole.AGENT,
+        UserRole.ADMIN,
+    },
+    (TicketStatus.IN_PROGRESS, TicketStatus.RESOLVED): {
+        UserRole.AGENT,
+        UserRole.ADMIN,
+    },
+    (TicketStatus.IN_PROGRESS, TicketStatus.OPEN): {UserRole.ADMIN},
+    (TicketStatus.WAITING_ON_USER, TicketStatus.IN_PROGRESS): {
+        UserRole.AGENT,
+        UserRole.ADMIN,
+    },
+    (TicketStatus.WAITING_ON_USER, TicketStatus.RESOLVED): {
+        UserRole.AGENT,
+        UserRole.ADMIN,
+    },
+    (TicketStatus.WAITING_ON_USER, TicketStatus.CLOSED): {UserRole.ADMIN},
+    (TicketStatus.RESOLVED, TicketStatus.CLOSED): {
+        UserRole.USER,
+        UserRole.AGENT,
+        UserRole.ADMIN,
+    },
+    (TicketStatus.RESOLVED, TicketStatus.OPEN): {
+        UserRole.USER,
+        UserRole.AGENT,
+        UserRole.ADMIN,
+    },
+    (TicketStatus.CLOSED, TicketStatus.OPEN): {UserRole.ADMIN},
+}
+
+_REQUIRED_TRANSITION_FIELDS: dict[tuple[TicketStatus, TicketStatus], tuple[str, ...]] = {
+    (TicketStatus.OPEN, TicketStatus.CLOSED): ("resolution_note",),
+    (TicketStatus.IN_PROGRESS, TicketStatus.RESOLVED): ("resolution_note",),
+    (TicketStatus.IN_PROGRESS, TicketStatus.WAITING_ON_USER): ("comment",),
+    (TicketStatus.IN_PROGRESS, TicketStatus.OPEN): ("reason",),
+    (TicketStatus.WAITING_ON_USER, TicketStatus.CLOSED): ("reason",),
+    (TicketStatus.RESOLVED, TicketStatus.OPEN): ("reason",),
+    (TicketStatus.CLOSED, TicketStatus.OPEN): ("reason",),
+}
+
+
+def _can_transition(actor: User, ticket: Ticket, target: TicketStatus) -> bool:
+    allowed_roles = _TRANSITION_RULES.get((ticket.status, target))
+    if not allowed_roles:
+        return False
+    if actor.role == UserRole.ADMIN:
+        return True
+    if actor.role == UserRole.AGENT:
+        return UserRole.AGENT in allowed_roles
+    if actor.role == UserRole.USER:
+        return UserRole.USER in allowed_roles and ticket.requester_id == actor.id
+    return False
+
+
+def transition_ticket(
+    db: Session,
+    actor: User,
+    ticket_id: uuid.UUID,
+    payload: TransitionTicketRequest,
+    *,
+    request_id: str | None,
+    ip: str | None,
+) -> Ticket:
+    """Apply one allowed status transition with optimistic concurrency."""
+    ticket = db.scalar(
+        select(Ticket)
+        .options(*_TICKET_LOAD_OPTIONS)
+        .where(Ticket.id == ticket_id)
+        .with_for_update()
+    )
+    if ticket is None or not _can_view(actor, ticket):
+        raise AppError("TICKET_NOT_FOUND", "Ticket not found", status_code=404)
+
+    if payload.status == ticket.status:
+        if ticket.version != payload.version:
+            raise AppError(
+                "TICKET_CHANGED",
+                "This ticket changed since you loaded it. Reload and try again",
+                status_code=409,
+            )
+        return ticket
+
+    if not _can_transition(actor, ticket, payload.status):
+        raise AppError(
+            "INVALID_STATUS_TRANSITION",
+            "This status change is not allowed",
+            status_code=409,
+        )
+
+    if ticket.version != payload.version:
+        raise AppError(
+            "TICKET_CHANGED",
+            "This ticket changed since you loaded it. Reload and try again",
+            status_code=409,
+        )
+
+    for field_name in _REQUIRED_TRANSITION_FIELDS.get((ticket.status, payload.status), ()):
+        if getattr(payload, field_name) is None:
+            raise AppError(
+                "MISSING_TRANSITION_FIELD",
+                f"{field_name} is required for this transition",
+                status_code=422,
+            )
+
+    if (
+        ticket.status == TicketStatus.OPEN
+        and payload.status == TicketStatus.IN_PROGRESS
+        and ticket.assignee_id is None
+    ):
+        raise AppError(
+            "ASSIGNEE_REQUIRED",
+            "Assign the ticket before moving it to in progress",
+            status_code=422,
+        )
+
+    before = _snapshot(ticket)
+    now = datetime.now(UTC)
+    old_status = ticket.status
+
+    if payload.status == TicketStatus.IN_PROGRESS:
+        ticket.status = TicketStatus.IN_PROGRESS
+    elif payload.status == TicketStatus.WAITING_ON_USER:
+        ticket.status = TicketStatus.WAITING_ON_USER
+        if payload.comment:
+            db.add(
+                Comment(
+                    ticket_id=ticket.id,
+                    author_id=actor.id,
+                    body=payload.comment,
+                    visibility=CommentVisibility.PUBLIC,
+                )
+            )
+    elif payload.status == TicketStatus.RESOLVED:
+        ticket.status = TicketStatus.RESOLVED
+        ticket.resolved_at = now
+        if payload.resolution_note is not None:
+            ticket.resolution_note = payload.resolution_note
+    elif payload.status == TicketStatus.CLOSED:
+        ticket.status = TicketStatus.CLOSED
+        ticket.closed_at = now
+        if payload.resolution_note is not None:
+            ticket.resolution_note = payload.resolution_note
+    elif payload.status == TicketStatus.OPEN:
+        ticket.status = TicketStatus.OPEN
+        if old_status == TicketStatus.IN_PROGRESS:
+            ticket.assignee_id = None
+        if old_status in {TicketStatus.RESOLVED, TicketStatus.CLOSED}:
+            ticket.resolved_at = None
+            ticket.closed_at = None
+            ticket.reopen_count += 1
+        if old_status == TicketStatus.RESOLVED:
+            ticket.closed_at = None
+
+    ticket.version += 1
+    after = _snapshot(ticket)
+
+    record_audit(
+        db,
+        action="ticket.status_changed",
+        entity_type="ticket",
+        entity_id=ticket.id,
+        actor=actor,
+        before=before,
+        after=after,
+        metadata={
+            key: value
+            for key, value in {
+                "reason": payload.reason,
+                "resolution_note": payload.resolution_note,
+                "comment": payload.comment,
+            }.items()
+            if value is not None
+        },
+        request_id=request_id,
+        ip=ip,
+    )
+    db.commit()
+
+    return get_ticket_for_actor(db, actor, ticket.id)
+
+
+def assign_ticket(
+    db: Session,
+    actor: User,
+    ticket_id: uuid.UUID,
+    payload: AssignTicketRequest,
+    *,
+    request_id: str | None,
+    ip: str | None,
+) -> Ticket:
+    """Assign or unassign a ticket. Agents and admins only."""
+    if actor.role not in {UserRole.AGENT, UserRole.ADMIN}:
+        raise AppError(
+            "FORBIDDEN",
+            "You do not have permission to perform this action",
+            status_code=403,
+        )
+
+    ticket = db.scalar(
+        select(Ticket)
+        .options(*_TICKET_LOAD_OPTIONS)
+        .where(Ticket.id == ticket_id)
+        .with_for_update()
+    )
+    if ticket is None or not _can_view(actor, ticket):
+        raise AppError("TICKET_NOT_FOUND", "Ticket not found", status_code=404)
+
+    if ticket.version != payload.version:
+        raise AppError(
+            "TICKET_CHANGED",
+            "This ticket changed since you loaded it. Reload and try again",
+            status_code=409,
+        )
+
+    if payload.assignee_id is None and actor.role != UserRole.ADMIN:
+        raise AppError(
+            "FORBIDDEN",
+            "Only admins can unassign a ticket",
+            status_code=403,
+        )
+
+    if payload.assignee_id is not None:
+        candidate = db.get(User, payload.assignee_id)
+        if (
+            candidate is None
+            or not candidate.is_active
+            or candidate.role not in {UserRole.AGENT, UserRole.ADMIN}
+        ):
+            raise AppError(
+                "INVALID_ASSIGNEE",
+                "Assignee must be an active agent or admin",
+                status_code=422,
+            )
+        pass
+
+    if ticket.assignee_id == payload.assignee_id:
+        return ticket
+
+    before = _snapshot(ticket)
+    ticket.assignee_id = payload.assignee_id
+    ticket.version += 1
+    after = _snapshot(ticket)
+
+    record_audit(
+        db,
+        action="ticket.assigned",
         entity_type="ticket",
         entity_id=ticket.id,
         actor=actor,

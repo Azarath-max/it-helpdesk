@@ -199,6 +199,75 @@ export interface paths {
         patch: operations["update_ticket_api_tickets__ticket_id__patch"];
         trace?: never;
     };
+    "/api/tickets/{ticket_id}/status": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Transition a ticket to another status */
+        patch: operations["transition_ticket_api_tickets__ticket_id__status_patch"];
+        trace?: never;
+    };
+    "/api/tickets/{ticket_id}/assign": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Assign or unassign a ticket */
+        patch: operations["assign_ticket_api_tickets__ticket_id__assign_patch"];
+        trace?: never;
+    };
+    "/api/tickets/{ticket_id}/comments": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List comments for a ticket */
+        get: operations["list_ticket_comments_api_tickets__ticket_id__comments_get"];
+        put?: never;
+        /** Add a comment or internal note */
+        post: operations["create_ticket_comment_api_tickets__ticket_id__comments_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/comments/{comment_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Soft-delete a comment */
+        delete: operations["remove_comment_api_comments__comment_id__delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -212,10 +281,53 @@ export interface components {
              */
             status: "accepted";
         };
+        /** AssignTicketRequest */
+        AssignTicketRequest: {
+            /** Assigneeid */
+            assigneeId?: string | null;
+            /** Version */
+            version: number;
+        };
         /** AuthResponse */
         AuthResponse: {
             user: components["schemas"]["UserRead"];
         };
+        /** CommentCreate */
+        CommentCreate: {
+            /** Body */
+            body: string;
+            /** @default PUBLIC */
+            visibility: components["schemas"]["CommentVisibility"];
+        };
+        /** CommentRead */
+        CommentRead: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Ticketid
+             * Format: uuid
+             */
+            ticketId: string;
+            author: components["schemas"]["UserBrief"] | null;
+            /** Body */
+            body: string;
+            visibility: components["schemas"]["CommentVisibility"];
+            /**
+             * Createdat
+             * Format: date-time
+             */
+            createdAt: string;
+            /** Deletedat */
+            deletedAt: string | null;
+        };
+        /**
+         * CommentVisibility
+         * @enum {string}
+         */
+        CommentVisibility: "PUBLIC" | "INTERNAL";
         /** ForgotPasswordRequest */
         ForgotPasswordRequest: {
             /**
@@ -250,6 +362,17 @@ export interface components {
             email: string;
             /** Password */
             password: string;
+        };
+        /** Page[CommentRead] */
+        Page_CommentRead_: {
+            /** Items */
+            items: components["schemas"]["CommentRead"][];
+            /** Total */
+            total: number;
+            /** Page */
+            page: number;
+            /** Pagesize */
+            pageSize: number;
         };
         /** Page[TicketRead] */
         Page_TicketRead_: {
@@ -337,6 +460,8 @@ export interface components {
             priority: components["schemas"]["TicketPriority"];
             /** Category */
             category: string | null;
+            /** Resolutionnote */
+            resolutionNote: string | null;
             source: components["schemas"]["TicketSource"];
             /** Version */
             version: number;
@@ -380,6 +505,18 @@ export interface components {
             category?: string | null;
             /** Version */
             version: number;
+        };
+        /** TransitionTicketRequest */
+        TransitionTicketRequest: {
+            status: components["schemas"]["TicketStatus"];
+            /** Version */
+            version: number;
+            /** Resolutionnote */
+            resolutionNote?: string | null;
+            /** Reason */
+            reason?: string | null;
+            /** Comment */
+            comment?: string | null;
         };
         /**
          * UserBrief
@@ -817,6 +954,174 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["TicketRead"];
                 };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    transition_ticket_api_tickets__ticket_id__status_patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                ticket_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TransitionTicketRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TicketRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    assign_ticket_api_tickets__ticket_id__assign_patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                ticket_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AssignTicketRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TicketRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_ticket_comments_api_tickets__ticket_id__comments_get: {
+        parameters: {
+            query?: {
+                page?: number;
+                pageSize?: number;
+            };
+            header?: never;
+            path: {
+                ticket_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Page_CommentRead_"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_ticket_comment_api_tickets__ticket_id__comments_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                ticket_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CommentCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CommentRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    remove_comment_api_comments__comment_id__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                comment_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
             /** @description Validation Error */
             422: {
