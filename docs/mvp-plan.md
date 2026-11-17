@@ -1,6 +1,6 @@
 # IT Helpdesk MVP Plan
 
-- **Status:** Phase 0 (foundations) complete. No ticket features implemented yet.
+- **Status:** Phase 1 (auth and RBAC) complete. Ticket features are next.
 - **Last updated:** 2026-11-17
 - **Goal:** A portfolio-grade, single-tenant IT helpdesk that demonstrates auth, RBAC, relational modeling, REST API design, transactional side effects, and a secure inbound integration.
 
@@ -36,7 +36,7 @@ Out of scope for the MVP:
 | API types | `openapi-typescript` from FastAPI's OpenAPI document |
 | Styling | Tailwind CSS v4 |
 | Backend quality | ruff + mypy + pytest |
-| Frontend quality | ESLint + tsc + Vitest (later) |
+| Frontend quality | oxlint + tsc + Vitest (later) |
 | Local infra | Docker Compose: PostgreSQL 18 + Mailpit |
 | CI | GitHub Actions |
 
@@ -197,7 +197,7 @@ Conventions:
 - Business change + audit + outbox are one transaction.
 - Request ID on every request; structured logs with redaction.
 - Stable error codes; no stack traces in responses.
-- Security headers, body size limits, rate limits on auth and webhook.
+- Security headers, body size limits, and auth/webhook rate limits added during hardening.
 - Settings validated at startup; production refuses default secrets.
 
 ## 10. Implementation phases
@@ -205,8 +205,8 @@ Conventions:
 | Phase | Content | Status |
 | --- | --- | --- |
 | 0 | Foundations: repo, FastAPI, SQLAlchemy/Alembic, Vite/React, Compose, CI | Complete |
-| 1 | Auth + RBAC: users/sessions, Argon2id, cookie sessions, guards, auth tests | Next |
-| 2 | Tickets + audit foundation: CRUD, scoping, filters, audit writer | Planned |
+| 1 | Auth + RBAC: users/sessions, Argon2id, cookie sessions, guards, auth tests | Complete |
+| 2 | Tickets + audit foundation: CRUD, scoping, filters, audit writer | Next |
 | 3 | Workflow + comments: transition service, comments, internal notes | Planned |
 | 4 | Email notifications: outbox, templates, worker, Mailpit, retries | Planned |
 | 5 | Webhook + demo script: HMAC, replay protection, idempotency | Planned |

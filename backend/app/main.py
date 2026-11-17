@@ -4,7 +4,13 @@ from app.api.system import router as system_router
 from app.core.config import get_settings
 from app.core.errors import register_exception_handlers
 from app.core.logging import configure_logging
-from app.core.middleware import RequestIdMiddleware, SecurityHeadersMiddleware
+from app.core.middleware import (
+    OriginCheckMiddleware,
+    RequestIdMiddleware,
+    SecurityHeadersMiddleware,
+)
+from app.modules.auth.router import router as auth_router
+from app.modules.users.router import router as users_router
 
 
 def create_app() -> FastAPI:
@@ -20,9 +26,12 @@ def create_app() -> FastAPI:
     )
 
     app.add_middleware(SecurityHeadersMiddleware)
+    app.add_middleware(OriginCheckMiddleware)
     app.add_middleware(RequestIdMiddleware)
     register_exception_handlers(app)
     app.include_router(system_router)
+    app.include_router(auth_router)
+    app.include_router(users_router)
 
     return app
 

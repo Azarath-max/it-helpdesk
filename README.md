@@ -2,14 +2,22 @@
 
 A single-tenant IT helpdesk ticketing system built as a portfolio project.
 
-**Status:** Phase 0 foundations complete. Auth, tickets, and integrations are not implemented yet.
+**Status:** Phase 1 complete. Accounts, cookie sessions, and role guards are live. Tickets and
+integrations are not implemented yet.
 
 ## What works today
 
 - `GET /health` liveness and `GET /ready` database readiness.
-- Request-ID and security-header middleware plus a stable JSON error envelope.
-- An Alembic baseline migration that enables `citext`.
-- A React overview page that polls both health endpoints through the Vite proxy.
+- Request-ID and security-header middleware, an origin check on state-changing API calls, and a
+  stable JSON error envelope.
+- Alembic migrations for `citext`, `users`, `sessions`, and `password_reset_tokens`.
+- Registration, login, logout, session-backed `GET /api/auth/me`, and password reset.
+- Argon2id password hashing, opaque session tokens stored as SHA-256 hashes, and a 14-day HttpOnly
+  `SameSite=Lax` session cookie.
+- Role-based access control with an admin-only `GET /api/users` paginated endpoint as the first
+  protected surface.
+- A React app with sign-in, registration, forgot/reset password, a protected dashboard, and an
+  admin accounts table.
 - Docker Compose for PostgreSQL 18 (host port 5433) and Mailpit.
 - CI for ruff, mypy, pytest, and frontend lint/typecheck/build.
 
@@ -57,6 +65,15 @@ URLs:
 
 Configuration is read from the repository root `.env` (see `.env.example`) or `backend/.env`.
 
+### Accounts and password resets
+
+Self-registration always creates a `user` account. Promote a demo account to `agent` or `admin`
+directly in the database; role management endpoints arrive in Phase 6.
+
+In development, `POST /api/auth/forgot-password` logs the reset link to the API console instead of
+sending email. The link is single-use and expires after 30 minutes. Email delivery via the outbox
+worker arrives in Phase 4.
+
 ## Commands
 
 | Task | Command |
@@ -91,4 +108,5 @@ docker-compose.yml
 
 ## Next phase
 
-Phase 1 adds users, sessions, registration/login/logout, Argon2id password hashing, cookie sessions, role and ownership guards, and the authorization test matrix. See the [MVP plan](docs/mvp-plan.md).
+Phase 2 adds tickets and the audit foundation: scoped ticket CRUD, filters, pagination, and an
+append-only audit trail. See the [MVP plan](docs/mvp-plan.md).

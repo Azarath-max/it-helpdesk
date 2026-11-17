@@ -51,6 +51,29 @@ def _error_response(
     )
 
 
+def error_response(
+    request: Request,
+    status_code: int,
+    code: str,
+    message: str,
+    details: Any = None,
+) -> JSONResponse:
+    """Build the shared error envelope for middleware and exception handlers."""
+    return _error_response(request, status_code, code, message, details)
+
+
+def _validation_details(exc: RequestValidationError) -> list[dict[str, Any]]:
+    """Make validation error context JSON-safe."""
+    details: list[dict[str, Any]] = []
+    for error in exc.errors():
+        item = dict(error)
+        context = item.get("ctx")
+        if isinstance(context, dict):
+            item["ctx"] = {key: str(value) for key, value in context.items()}
+        details.append(item)
+    return details
+
+
 def register_exception_handlers(app: FastAPI) -> None:
     @app.exception_handler(AppError)
     async def handle_app_error(request: Request, exc: AppError) -> JSONResponse:
@@ -66,7 +89,7 @@ def register_exception_handlers(app: FastAPI) -> None:
             422,
             "VALIDATION_ERROR",
             "Request validation failed",
-            exc.errors(),
+            _validation_details(exc),
         )
 
     @app.exception_handler(StarletteHTTPException)

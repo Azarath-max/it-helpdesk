@@ -2,7 +2,7 @@ from functools import lru_cache
 from pathlib import Path
 from typing import Literal
 
-from pydantic import model_validator
+from pydantic import Field, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 BACKEND_DIR = Path(__file__).resolve().parents[2]
@@ -26,6 +26,8 @@ class Settings(BaseSettings):
     app_base_url: str = "http://127.0.0.1:5173"
     session_secret: str = "dev-only-change-me"
     webhook_secret: str = "dev-only-change-me"
+    session_ttl_days: int = Field(default=14, ge=1, le=90)
+    password_reset_ttl_minutes: int = Field(default=30, ge=5, le=1440)
     smtp_host: str = "localhost"
     smtp_port: int = 1025
     smtp_from: str = "helpdesk@example.test"
