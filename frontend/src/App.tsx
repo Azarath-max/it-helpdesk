@@ -1,6 +1,7 @@
 import { Navigate, Route, Routes } from 'react-router-dom'
 import { AppLayout } from './components/AppLayout'
 import { RequireAuth } from './features/auth/RequireAuth'
+import { AuditPage } from './routes/AuditPage'
 import { CreateTicketPage } from './routes/CreateTicketPage'
 import { DashboardPage } from './routes/DashboardPage'
 import { ForgotPasswordPage } from './routes/ForgotPasswordPage'
@@ -26,6 +27,7 @@ export default function App() {
           <Route path="tickets" element={<TicketsPage />} />
           <Route path="tickets/new" element={<CreateTicketPage />} />
           <Route path="tickets/:id" element={<TicketDetailPage />} />
+          <Route path="audit" element={<AuditPage />} />
         </Route>
         <Route path="signin" element={<Navigate to="/login" replace />} />
         <Route path="*" element={<NotFoundPage />} />

@@ -174,3 +174,9 @@ def reset_password(db: Session, raw_token: str, new_password: str) -> User:
     db.execute(delete(UserSession).where(UserSession.user_id == user.id))
     db.commit()
     return user
+
+
+def revoke_all_sessions(db: Session, user_id: object) -> None:
+    """Revoke every session for an account."""
+    db.execute(delete(UserSession).where(UserSession.user_id == user_id))
+    db.commit()

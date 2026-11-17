@@ -14,3 +14,11 @@ class UserRead(APIModel):
     role: UserRole
     is_active: bool
     created_at: datetime
+
+
+class UpdateUserRoleRequest(APIModel):
+    role: UserRole
+
+
+class UpdateUserStatusRequest(APIModel):
+    is_active: bool

@@ -1,6 +1,6 @@
 # IT Helpdesk MVP Plan
 
-- **Status:** Phase 5 (webhook intake) complete. Admin tooling and hardening are next.
+- **Status:** Phase 6 (admin tooling) complete. Hardening and demo polish are next.
 - **Last updated:** 2026-11-17
 - **Goal:** A portfolio-grade, single-tenant IT helpdesk that demonstrates auth, RBAC, relational modeling, REST API design, transactional side effects, and a secure inbound integration.
 
@@ -210,7 +210,8 @@ Conventions:
 | 3 | Workflow + comments: transition service, comments, internal notes | Complete |
 | 4 | Email notifications: outbox, templates, worker, Mailpit, retries | Complete |
 | 5 | Webhook + demo script: HMAC, replay protection, idempotency | Complete |
-| 6 | Admin: user management, audit query, minimal admin UI | Next |
+| 6 | Admin: user management, audit query, minimal admin UI | Complete |
+| 7 | Hardening: security audit, tests, docs, Docker image, demo | Next |
 | 3 | Workflow + comments: transition service, comments, internal notes | Planned |
 | 4 | Email notifications: outbox, templates, worker, Mailpit, retries | Planned |
 | 5 | Webhook + demo script: HMAC, replay protection, idempotency | Planned |

@@ -41,6 +41,11 @@ export function AppLayout() {
                 <NavLink to="/tickets" className={navLinkClass}>
                   Tickets
                 </NavLink>
+                {user.role === 'admin' ? (
+                  <NavLink to="/audit" className={navLinkClass}>
+                    Audit
+                  </NavLink>
+                ) : null}
               </>
             ) : null}
             <a

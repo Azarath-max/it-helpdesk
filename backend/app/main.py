@@ -9,6 +9,7 @@ from app.core.middleware import (
     RequestIdMiddleware,
     SecurityHeadersMiddleware,
 )
+from app.modules.audit.router import router as audit_router
 from app.modules.auth.router import router as auth_router
 from app.modules.comments.router import router as comments_router
 from app.modules.tickets.router import router as tickets_router
@@ -33,6 +34,7 @@ def create_app() -> FastAPI:
     app.add_middleware(RequestIdMiddleware)
     register_exception_handlers(app)
     app.include_router(system_router)
+    app.include_router(audit_router)
     app.include_router(auth_router)
     app.include_router(users_router)
     app.include_router(tickets_router)

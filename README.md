@@ -2,8 +2,8 @@
 
 A single-tenant IT helpdesk ticketing system built as a portfolio project.
 
-**Status:** Phase 5 complete. A signed inbound webhook creates tickets idempotently, with replay
-protection and a demo script. Admin tooling and hardening are next.
+**Status:** Phase 6 complete. Admin user management, role changes, activation, and audit query are
+live. Hardening and demo polish are next.
 
 ## What works today
 
@@ -28,6 +28,8 @@ protection and a demo script. Admin tooling and hardening are next.
 - A signed inbound webhook at `POST /api/webhooks/tickets`: HMAC-SHA256 over the timestamp and raw
   body, five-minute replay window, strict payload validation, and `(source, externalId)`
   idempotency. Includes `scripts/send_webhook.py` as a demo client.
+- Admin tooling: paginated user management, role changes, activation/deactivation with session
+  revocation, and a filterable audit log.
 - A React app with sign-in, registration, forgot/reset password, a protected dashboard, ticket
   lists, creation, and detail/editing.
 - Docker Compose for PostgreSQL 18 (host port 5433) and Mailpit.
@@ -120,5 +122,5 @@ docker-compose.yml
 
 ## Next phase
 
-Phase 6 adds admin tooling: user and role management, audit query, and the admin UI.
+Phase 7 hardens the app: security review, expanded tests, Docker image, and demo polish.
 See the [MVP plan](docs/mvp-plan.md).

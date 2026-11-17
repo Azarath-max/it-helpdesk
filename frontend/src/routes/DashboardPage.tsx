@@ -2,7 +2,7 @@ import { Link } from 'react-router-dom'
 import { Card, RoleBadge } from '../components/ui'
 import { useSession } from '../features/auth/hooks'
 import { useTickets } from '../features/tickets/hooks'
-import { useUsers } from '../features/users/hooks'
+import { useUpdateUserRole, useUpdateUserStatus, useUsers } from '../features/users/hooks'
 import type { User } from '../features/auth/hooks'
 import { statusLabels } from '../features/tickets/status'
 
@@ -21,7 +21,11 @@ function formatDate(value: string) {
 }
 
 function AdminAccounts() {
+  const session = useSession()
   const users = useUsers(true)
+  const updateRole = useUpdateUserRole()
+  const updateStatus = useUpdateUserStatus()
+  const currentUserId = session.data?.id
 
   return (
     <section aria-labelledby="accounts" className="space-y-3">
@@ -69,18 +73,40 @@ function AdminAccounts() {
                     <td className="px-5 py-3 font-medium text-slate-900">{account.name}</td>
                     <td className="px-5 py-3 text-slate-600">{account.email}</td>
                     <td className="px-5 py-3">
-                      <RoleBadge role={account.role} />
+                      <select
+                        value={account.role}
+                        disabled={account.id === currentUserId}
+                        onChange={(event) =>
+                          updateRole.mutate({
+                            userId: account.id,
+                            role: event.target.value as 'user' | 'agent' | 'admin',
+                          })
+                        }
+                        className="rounded-md border border-slate-300 bg-white px-2 py-1 text-xs"
+                      >
+                        <option value="user">user</option>
+                        <option value="agent">agent</option>
+                        <option value="admin">admin</option>
+                      </select>
                     </td>
                     <td className="px-5 py-3">
-                      <span
+                      <button
+                        type="button"
+                        disabled={account.id === currentUserId}
+                        onClick={() =>
+                          updateStatus.mutate({
+                            userId: account.id,
+                            isActive: !account.isActive,
+                          })
+                        }
                         className={
                           account.isActive
-                            ? 'text-emerald-700'
-                            : 'text-slate-400'
+                            ? 'text-emerald-700 hover:underline disabled:opacity-50'
+                            : 'text-slate-400 hover:underline disabled:opacity-50'
                         }
                       >
                         {account.isActive ? 'Active' : 'Disabled'}
-                      </span>
+                      </button>
                     </td>
                     <td className="px-5 py-3 text-slate-600">
                       {formatDate(account.createdAt)}

@@ -44,6 +44,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/audit-events": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Query audit events (admin only) */
+        get: operations["list_audit_events_endpoint_api_audit_events_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/auth/register": {
         parameters: {
             query?: never;
@@ -163,6 +180,40 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/users/{user_id}/role": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Change a user's role (admin only) */
+        patch: operations["update_user_role_api_users__user_id__role_patch"];
+        trace?: never;
+    };
+    "/api/users/{user_id}/status": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Activate or deactivate a user (admin only) */
+        patch: operations["update_user_status_api_users__user_id__status_patch"];
+        trace?: never;
+    };
     "/api/tickets": {
         parameters: {
             query?: never;
@@ -268,6 +319,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/webhooks/tickets": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Create a ticket from an external system */
+        post: operations["create_webhook_ticket_api_webhooks_tickets_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -287,6 +355,47 @@ export interface components {
             assigneeId?: string | null;
             /** Version */
             version: number;
+        };
+        /** AuditEventRead */
+        AuditEventRead: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Actortype */
+            actorType: string;
+            actor: components["schemas"]["UserBrief"] | null;
+            /** Action */
+            action: string;
+            /** Entitytype */
+            entityType: string;
+            /**
+             * Entityid
+             * Format: uuid
+             */
+            entityId: string;
+            /** Before */
+            before: {
+                [key: string]: unknown;
+            } | null;
+            /** After */
+            after: {
+                [key: string]: unknown;
+            } | null;
+            /** Metadata */
+            metadata?: {
+                [key: string]: unknown;
+            } | null;
+            /** Requestid */
+            requestId: string | null;
+            /** Ip */
+            ip: string | null;
+            /**
+             * Createdat
+             * Format: date-time
+             */
+            createdAt: string;
         };
         /** AuthResponse */
         AuthResponse: {
@@ -362,6 +471,17 @@ export interface components {
             email: string;
             /** Password */
             password: string;
+        };
+        /** Page[AuditEventRead] */
+        Page_AuditEventRead_: {
+            /** Items */
+            items: components["schemas"]["AuditEventRead"][];
+            /** Total */
+            total: number;
+            /** Page */
+            page: number;
+            /** Pagesize */
+            pageSize: number;
         };
         /** Page[CommentRead] */
         Page_CommentRead_: {
@@ -462,7 +582,8 @@ export interface components {
             category: string | null;
             /** Resolutionnote */
             resolutionNote: string | null;
-            source: components["schemas"]["TicketSource"];
+            /** Source */
+            source: string;
             /** Version */
             version: number;
             requester: components["schemas"]["UserBrief"];
@@ -484,11 +605,6 @@ export interface components {
             /** Reopencount */
             reopenCount: number;
         };
-        /**
-         * TicketSource
-         * @enum {string}
-         */
-        TicketSource: "WEB" | "WEBHOOK";
         /**
          * TicketStatus
          * @description Ticket lifecycle states. Transitions arrive in Phase 3.
@@ -517,6 +633,15 @@ export interface components {
             reason?: string | null;
             /** Comment */
             comment?: string | null;
+        };
+        /** UpdateUserRoleRequest */
+        UpdateUserRoleRequest: {
+            role: components["schemas"]["UserRole"];
+        };
+        /** UpdateUserStatusRequest */
+        UpdateUserStatusRequest: {
+            /** Isactive */
+            isActive: boolean;
         };
         /**
          * UserBrief
@@ -576,6 +701,17 @@ export interface components {
             /** Context */
             ctx?: Record<string, never>;
         };
+        /** WebhookTicketResponse */
+        WebhookTicketResponse: {
+            /**
+             * Ticketid
+             * Format: uuid
+             */
+            ticketId: string;
+            status: components["schemas"]["TicketStatus"];
+            /** Duplicate */
+            duplicate: boolean;
+        };
     };
     responses: never;
     parameters: never;
@@ -629,6 +765,44 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+        };
+    };
+    list_audit_events_endpoint_api_audit_events_get: {
+        parameters: {
+            query?: {
+                action?: string | null;
+                entityType?: string | null;
+                actorUserId?: string | null;
+                entityId?: string | null;
+                from?: string | null;
+                to?: string | null;
+                page?: number;
+                pageSize?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Page_AuditEventRead_"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
             };
         };
     };
@@ -819,6 +993,76 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["Page_UserRead_"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    update_user_role_api_users__user_id__role_patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                user_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateUserRoleRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UserRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    update_user_status_api_users__user_id__status_patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                user_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateUserStatusRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UserRead"];
                 };
             };
             /** @description Validation Error */
@@ -1130,6 +1374,26 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_webhook_ticket_api_webhooks_tickets_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WebhookTicketResponse"];
                 };
             };
         };
