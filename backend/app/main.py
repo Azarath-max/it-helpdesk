@@ -13,6 +13,7 @@ from app.modules.auth.router import router as auth_router
 from app.modules.comments.router import router as comments_router
 from app.modules.tickets.router import router as tickets_router
 from app.modules.users.router import router as users_router
+from app.modules.webhooks.router import router as webhooks_router
 
 
 def create_app() -> FastAPI:
@@ -36,6 +37,7 @@ def create_app() -> FastAPI:
     app.include_router(users_router)
     app.include_router(tickets_router)
     app.include_router(comments_router)
+    app.include_router(webhooks_router)
 
     return app
 

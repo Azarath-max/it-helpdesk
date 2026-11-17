@@ -1,11 +1,12 @@
-from datetime import UTC, datetime, timedelta
+import uuid
+from datetime import UTC, datetime
 
 from fastapi.testclient import TestClient
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from app.modules.notifications.models import Notification, NotificationStatus
-from app.modules.notifications.service import process_pending
+from app.modules.notifications.service import process_notification
 from app.modules.notifications.transport import (
     PermanentEmailError,
     TransientEmailError,
@@ -48,16 +49,17 @@ def test_ticket_created_queues_and_sends_notification(
     ticket = create_ticket(client)
 
     notification = db.scalar(
-        select(Notification).where(Notification.event_type == "ticket.created")
+        select(Notification).where(
+            Notification.event_type == "ticket.created",
+            Notification.recipient_email == owner.email,
+        )
     )
     assert notification is not None
-    assert notification.recipient_email == owner.email
     assert notification.status == NotificationStatus.PENDING
     assert notification.idempotency_key == f"ticket.created:{ticket['id']}:{owner.id}"
 
     transport = FakeTransport()
-    processed = process_pending(db, transport)
-    assert processed == 1
+    process_notification(db, transport, notification.id)
 
     db.refresh(notification)
     assert notification.status == NotificationStatus.SENT
@@ -122,9 +124,10 @@ def test_transient_failure_retries_then_dead(
     db.commit()
 
     transport = FakeTransport(fail_times=5, permanent=False)
-    now = datetime.now(UTC)
-    for attempt in range(5):
-        process_pending(db, transport, now=now + timedelta(hours=attempt))
+    for _attempt in range(5):
+        notification.next_attempt_at = datetime.now(UTC)
+        db.commit()
+        process_notification(db, transport, notification.id)
         db.refresh(notification)
         if notification.status == NotificationStatus.DEAD:
             break
@@ -156,7 +159,7 @@ def test_permanent_failure_marks_dead_immediately(db: Session) -> None:
     db.commit()
 
     transport = FakeTransport(fail_times=1, permanent=True)
-    process_pending(db, transport)
+    process_notification(db, transport, notification.id)
 
     db.refresh(notification)
     assert notification.status == NotificationStatus.DEAD
@@ -187,7 +190,8 @@ def test_status_change_queues_recipients_and_skips_actor(
     assert any("status_changed" in key for key in keys)
     recipients = db.scalars(
         select(Notification.recipient_email).where(
-            Notification.event_type == "ticket.status_changed"
+            Notification.event_type == "ticket.status_changed",
+            Notification.ticket_id == uuid.UUID(ticket["id"]),
         )
     ).all()
     assert owner.email in recipients
@@ -211,7 +215,10 @@ def test_assignment_queues_assignee_notification(
     )
 
     notification = db.scalar(
-        select(Notification).where(Notification.event_type == "ticket.assigned")
+        select(Notification).where(
+            Notification.event_type == "ticket.assigned",
+            Notification.ticket_id == uuid.UUID(ticket["id"]),
+        )
     )
     assert notification is not None
     assert notification.recipient_email == agent.email
@@ -238,7 +245,10 @@ def test_comment_queues_participants_not_author(
     )
 
     recipients = db.scalars(
-        select(Notification.recipient_email).where(Notification.event_type == "ticket.commented")
+        select(Notification.recipient_email).where(
+            Notification.event_type == "ticket.commented",
+            Notification.ticket_id == uuid.UUID(ticket["id"]),
+        )
     ).all()
     assert agent.email in recipients
     assert owner.email not in recipients

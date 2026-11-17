@@ -5,7 +5,6 @@ from pydantic import Field, field_validator, model_validator
 
 from app.modules.tickets.models import (
     TicketPriority,
-    TicketSource,
     TicketStatus,
 )
 from app.modules.users.models import UserRole
@@ -34,7 +33,7 @@ class TicketRead(APIModel):
     priority: TicketPriority
     category: str | None
     resolution_note: str | None
-    source: TicketSource
+    source: str
     version: int
     requester: UserBrief
     assignee: UserBrief | None

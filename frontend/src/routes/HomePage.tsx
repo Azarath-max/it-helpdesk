@@ -33,15 +33,15 @@ export function HomePage() {
     <div className="space-y-10">
       <section className="space-y-4">
         <span className="inline-flex items-center rounded-full bg-slate-900/5 px-3 py-1 text-xs font-medium text-slate-700 ring-1 ring-inset ring-slate-900/10">
-          Phase 4 · Email notifications
+          Phase 5 · Webhook and hardening
         </span>
         <div className="max-w-2xl space-y-3">
           <h1 className="text-3xl font-semibold tracking-tight text-slate-900 sm:text-4xl">
             IT Helpdesk
           </h1>
           <p className="text-base leading-7 text-slate-600">
-            A single-tenant ticketing system for IT support. Accounts, cookie sessions, and
-            role-based access are live. Ticket features arrive in the next phases.
+            A single-tenant ticketing system for IT support. Accounts, scoped tickets, workflow,
+            assignment, comments, transactional email, and signed webhook intake are live.
           </p>
         </div>
         <div className="flex flex-wrap gap-3">

@@ -116,6 +116,24 @@ def _send_one(db: Session, transport: EmailTransport, notification: Notification
     db.commit()
 
 
+def process_notification(
+    db: Session,
+    transport: EmailTransport,
+    notification_id: uuid.UUID,
+) -> bool:
+    """Process one notification by id. Returns True if it was due and processed."""
+    notification = db.get(Notification, notification_id)
+    if notification is None:
+        return False
+    if notification.status not in {NotificationStatus.PENDING, NotificationStatus.FAILED}:
+        return False
+    now = datetime.now(UTC)
+    if notification.next_attempt_at > now:
+        return False
+    _send_one(db, transport, notification)
+    return True
+
+
 def process_pending(
     db: Session,
     transport: EmailTransport,

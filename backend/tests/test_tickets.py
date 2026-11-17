@@ -52,7 +52,7 @@ def test_requester_creates_open_ticket_with_audit(
     assert body["status"] == "OPEN"
     assert body["priority"] == "HIGH"
     assert body["category"] == "Hardware"
-    assert body["source"] == "WEB"
+    assert body["source"] == "web"
     assert body["version"] == 1
     assert body["requester"]["email"] == owner.email
     assert body["assignee"] is None

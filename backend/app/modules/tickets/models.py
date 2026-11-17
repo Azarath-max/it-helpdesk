@@ -44,11 +44,6 @@ class TicketPriority(enum.StrEnum):
     URGENT = "URGENT"
 
 
-class TicketSource(enum.StrEnum):
-    WEB = "WEB"
-    WEBHOOK = "WEBHOOK"
-
-
 class Ticket(Base):
     """A support request belonging to one requester."""
 
@@ -76,10 +71,8 @@ class Ticket(Base):
     )
     category: Mapped[str | None] = mapped_column(String(60), nullable=True)
     resolution_note: Mapped[str | None] = mapped_column(Text, nullable=True)
-    source: Mapped[TicketSource] = mapped_column(
-        Enum(TicketSource, name="ticket_source", values_callable=enum_values),
-        nullable=False,
-        default=TicketSource.WEB,
+    source: Mapped[str] = mapped_column(
+        String(80), nullable=False, default="web", server_default="web"
     )
     external_id: Mapped[str | None] = mapped_column(String(120), nullable=True)
     requester_id: Mapped[uuid.UUID] = mapped_column(

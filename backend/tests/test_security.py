@@ -76,4 +76,4 @@ def test_webhook_route_is_exempt_from_origin_check(client: TestClient) -> None:
         headers={"Origin": "https://evil.example"},
     )
 
-    assert response.status_code == 404
+    assert response.status_code == 401

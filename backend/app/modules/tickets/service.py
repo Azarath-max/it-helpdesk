@@ -19,7 +19,6 @@ from app.modules.notifications.service import (
 from app.modules.tickets.models import (
     Ticket,
     TicketPriority,
-    TicketSource,
     TicketStatus,
 )
 from app.modules.tickets.schemas import (
@@ -146,6 +145,8 @@ def create_ticket(
     *,
     request_id: str | None,
     ip: str | None,
+    source: str = "web",
+    external_id: str | None = None,
 ) -> Ticket:
     """Create an OPEN ticket for the authenticated requester."""
     next_ref = int(db.scalar(text("SELECT nextval('ticket_ref_seq')")) or 0)
@@ -156,7 +157,8 @@ def create_ticket(
         priority=payload.priority,
         category=payload.category,
         status=TicketStatus.OPEN,
-        source=TicketSource.WEB,
+        source=source,
+        external_id=external_id,
         requester_id=actor.id,
     )
     db.add(ticket)
