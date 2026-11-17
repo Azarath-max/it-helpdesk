@@ -2,8 +2,8 @@
 
 A single-tenant IT helpdesk ticketing system built as a portfolio project.
 
-**Status:** Phase 3 complete. Enforced ticket workflow, assignment, public comments, and internal
-notes are live. Email notifications are next.
+**Status:** Phase 4 complete. Transactional email via an outbox, worker, retries, templates, and
+Mailpit integration is live. Webhook intake is next.
 
 ## What works today
 
@@ -22,6 +22,9 @@ notes are live. Email notifications are next.
 - Public comments and internal notes with soft deletion and role-based visibility.
 - An append-only `audit_events` table recording ticket creation, edits, transitions, assignment,
   and comments with before/after diffs.
+- Transactional email through a `notifications` outbox: events are queued in the same transaction as
+  the ticket change, rendered with Jinja2 templates, and delivered by `python -m app.worker` with
+  retries and dead-letter handling. Mailpit captures mail locally.
 - A React app with sign-in, registration, forgot/reset password, a protected dashboard, ticket
   lists, creation, and detail/editing.
 - Docker Compose for PostgreSQL 18 (host port 5433) and Mailpit.
@@ -114,5 +117,5 @@ docker-compose.yml
 
 ## Next phase
 
-Phase 4 adds email notifications: a transactional outbox, templates, worker, retries, and Mailpit
-previews. See the [MVP plan](docs/mvp-plan.md).
+Phase 5 adds the generic HMAC webhook: replay protection, idempotency, and a signed demo script.
+See the [MVP plan](docs/mvp-plan.md).

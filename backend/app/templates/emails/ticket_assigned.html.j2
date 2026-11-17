@@ -1,0 +1,13 @@
+<!doctype html>
+<html>
+  <body style="font-family: sans-serif; color: #1f2937;">
+    <p>Hello {{ recipient_name }},</p>
+    <p>A ticket has been assigned to you.</p>
+    <p><strong>Ticket:</strong> {{ ticket_public_ref }}<br />
+    <strong>Title:</strong> {{ ticket_title }}<br />
+    <strong>Status:</strong> {{ ticket_status }}<br />
+    <strong>Assigned by:</strong> {{ actor_name }}</p>
+    <p><a href="{{ deep_link }}">View the ticket</a></p>
+  </body>
+</html>
+PY

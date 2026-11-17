@@ -1,0 +1,15 @@
+<!doctype html>
+<html>
+  <body style="font-family: sans-serif; color: #1f2937;">
+    <p>Hello {{ recipient_name }},</p>
+    <p>A new comment was added to your ticket.</p>
+    <p><strong>Ticket:</strong> {{ ticket_public_ref }}<br />
+    <strong>Title:</strong> {{ ticket_title }}<br />
+    <strong>From:</strong> {{ actor_name }}</p>
+    <blockquote style="border-left: 3px solid #d1d5db; margin: 1rem 0; padding-left: 1rem; color: #374151;">
+      {{ comment_body }}
+    </blockquote>
+    <p><a href="{{ deep_link }}">View the conversation</a></p>
+  </body>
+</html>
+PY

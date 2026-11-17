@@ -11,6 +11,11 @@ from sqlalchemy.orm import Session, selectinload
 from app.core.errors import AppError
 from app.modules.audit.service import record_audit
 from app.modules.comments.models import Comment, CommentVisibility
+from app.modules.notifications.service import (
+    queue_ticket_assigned,
+    queue_ticket_created,
+    queue_ticket_status_changed,
+)
 from app.modules.tickets.models import (
     Ticket,
     TicketPriority,
@@ -167,6 +172,7 @@ def create_ticket(
         request_id=request_id,
         ip=ip,
     )
+    queue_ticket_created(db, ticket, actor)
     db.commit()
 
     return get_ticket_for_actor(db, actor, ticket.id)
@@ -419,6 +425,11 @@ def transition_ticket(
         request_id=request_id,
         ip=ip,
     )
+    db.refresh(ticket, attribute_names=["requester", "assignee"])
+    recipients = [ticket.requester]
+    if ticket.assignee is not None and ticket.assignee.id != ticket.requester.id:
+        recipients.append(ticket.assignee)
+    queue_ticket_status_changed(db, ticket, recipients, actor)
     db.commit()
 
     return get_ticket_for_actor(db, actor, ticket.id)
@@ -464,6 +475,7 @@ def assign_ticket(
             status_code=403,
         )
 
+    candidate: User | None = None
     if payload.assignee_id is not None:
         candidate = db.get(User, payload.assignee_id)
         if (
@@ -476,7 +488,6 @@ def assign_ticket(
                 "Assignee must be an active agent or admin",
                 status_code=422,
             )
-        pass
 
     if ticket.assignee_id == payload.assignee_id:
         return ticket
@@ -497,6 +508,8 @@ def assign_ticket(
         request_id=request_id,
         ip=ip,
     )
+    if candidate is not None and candidate.id != actor.id:
+        queue_ticket_assigned(db, ticket, candidate, actor)
     db.commit()
 
     return get_ticket_for_actor(db, actor, ticket.id)

@@ -30,7 +30,10 @@ class Settings(BaseSettings):
     password_reset_ttl_minutes: int = Field(default=30, ge=5, le=1440)
     smtp_host: str = "localhost"
     smtp_port: int = 1025
-    smtp_from: str = "helpdesk@example.test"
+    smtp_from: str = "helpdesk@example.com"
+    smtp_username: str | None = None
+    smtp_password: str | None = None
+    smtp_use_tls: bool = False
 
     @model_validator(mode="after")
     def reject_default_secrets_in_production(self) -> "Settings":

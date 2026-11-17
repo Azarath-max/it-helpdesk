@@ -10,6 +10,7 @@ from app.core.errors import AppError
 from app.modules.audit.service import record_audit
 from app.modules.comments.models import Comment, CommentVisibility
 from app.modules.comments.schemas import CommentCreate
+from app.modules.notifications.service import queue_ticket_commented
 from app.modules.tickets.service import get_ticket_for_actor
 from app.modules.users.models import User, UserRole
 
@@ -77,6 +78,26 @@ def add_comment(
         request_id=request_id,
         ip=ip,
     )
+
+    if payload.visibility == CommentVisibility.PUBLIC:
+        recipients = [ticket.requester]
+        if ticket.assignee is not None and ticket.assignee.id != ticket.requester.id:
+            recipients.append(ticket.assignee)
+    else:
+        recipients = []
+        if ticket.assignee is not None and ticket.assignee.id != actor.id:
+            recipients.append(ticket.assignee)
+
+    if recipients:
+        queue_ticket_commented(
+            db,
+            ticket,
+            comment.body,
+            recipients,
+            actor,
+            internal=payload.visibility == CommentVisibility.INTERNAL,
+        )
+
     db.commit()
 
     return db.scalar(

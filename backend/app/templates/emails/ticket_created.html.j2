@@ -1,0 +1,13 @@
+<!doctype html>
+<html>
+  <body style="font-family: sans-serif; color: #1f2937;">
+    <p>Hello {{ recipient_name }},</p>
+    <p>Your support request has been created.</p>
+    <p><strong>Ticket:</strong> {{ ticket_public_ref }}<br />
+    <strong>Title:</strong> {{ ticket_title }}<br />
+    <strong>Status:</strong> {{ ticket_status }}</p>
+    <p><a href="{{ deep_link }}">View your ticket</a></p>
+    <p>The IT team will follow up soon.</p>
+  </body>
+</html>
+PY
