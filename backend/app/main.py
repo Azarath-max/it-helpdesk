@@ -6,7 +6,9 @@ from app.core.errors import register_exception_handlers
 from app.core.logging import configure_logging
 from app.core.middleware import (
     OriginCheckMiddleware,
+    RateLimitMiddleware,
     RequestIdMiddleware,
+    RequestSizeLimitMiddleware,
     SecurityHeadersMiddleware,
 )
 from app.modules.audit.router import router as audit_router
@@ -31,6 +33,8 @@ def create_app() -> FastAPI:
 
     app.add_middleware(SecurityHeadersMiddleware)
     app.add_middleware(OriginCheckMiddleware)
+    app.add_middleware(RateLimitMiddleware)
+    app.add_middleware(RequestSizeLimitMiddleware)
     app.add_middleware(RequestIdMiddleware)
     register_exception_handlers(app)
     app.include_router(system_router)

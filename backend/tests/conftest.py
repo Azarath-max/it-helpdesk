@@ -6,6 +6,10 @@ assertions must scope counts to the rows a test creates rather than assume the
 tables are empty.
 """
 
+import os
+
+os.environ.setdefault("RATE_LIMIT_ENABLED", "false")
+
 from collections.abc import Callable, Iterator
 
 import pytest

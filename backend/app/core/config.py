@@ -27,6 +27,10 @@ class Settings(BaseSettings):
     session_secret: str = "dev-only-change-me"
     webhook_secret: str = "dev-only-change-me"
     session_ttl_days: int = Field(default=14, ge=1, le=90)
+    rate_limit_enabled: bool = True
+    auth_rate_limit: int = Field(default=30, ge=1)
+    webhook_rate_limit: int = Field(default=60, ge=1)
+    rate_limit_window_seconds: int = Field(default=60, ge=1)
     password_reset_ttl_minutes: int = Field(default=30, ge=5, le=1440)
     smtp_host: str = "localhost"
     smtp_port: int = 1025
