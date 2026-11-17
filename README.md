@@ -50,10 +50,10 @@ npm run dev
 
 URLs:
 
-- API docs: <http://localhost:8000/docs>
-- API health: <http://localhost:8000/health>
-- Web app: <http://localhost:5173>
-- Mailpit: <http://localhost:8025>
+- API docs: <http://127.0.0.1:8000/docs>
+- API health: <http://127.0.0.1:8000/health>
+- Web app: <http://127.0.0.1:5173>
+- Mailpit: <http://127.0.0.1:8025>
 
 Configuration is read from the repository root `.env` (see `.env.example`) or `backend/.env`.
 

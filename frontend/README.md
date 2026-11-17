@@ -8,7 +8,7 @@ Run from this directory:
 
 ```powershell
 npm install
-npm run dev         # http://localhost:5173
+npm run dev         # http://127.0.0.1:5173
 npm run typecheck
 npm run lint
 npm run build

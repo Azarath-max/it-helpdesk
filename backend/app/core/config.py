@@ -23,7 +23,7 @@ class Settings(BaseSettings):
     app_version: str = "0.1.0"
     environment: Literal["development", "test", "production"] = "development"
     database_url: str = "postgresql+psycopg://helpdesk:helpdesk@localhost:5433/helpdesk"
-    app_base_url: str = "http://localhost:5173"
+    app_base_url: str = "http://127.0.0.1:5173"
     session_secret: str = "dev-only-change-me"
     webhook_secret: str = "dev-only-change-me"
     smtp_host: str = "localhost"

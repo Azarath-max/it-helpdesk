@@ -29,7 +29,7 @@ Host port 5433 avoids clashing with a locally installed PostgreSQL on 5432.
 
 ```text
 ENVIRONMENT=development
-APP_BASE_URL=http://localhost:5173
+APP_BASE_URL=http://127.0.0.1:5173
 
 DATABASE_URL=postgresql+psycopg://helpdesk:helpdesk@localhost:5433/helpdesk
 
@@ -52,7 +52,7 @@ Commit `.env.example` with placeholders. Never commit `.env`.
 5. `cd backend; uv run uvicorn app.main:app --reload --port 8000`
 6. `cd frontend; npm install; npm run dev`
 7. Verify `GET http://127.0.0.1:8000/health` and `/ready` return `200`.
-8. Open Mailpit at `http://localhost:8025`.
+8. Open Mailpit at `http://127.0.0.1:8025`.
 9. Run the notification worker with `cd backend; uv run python -m app.worker` when Phase 4 lands.
 
 ## CI Pipeline

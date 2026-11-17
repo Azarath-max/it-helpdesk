@@ -6,8 +6,8 @@ type NavItem =
 
 const navigation: NavItem[] = [
   { label: 'Overview', to: '/' },
-  { label: 'API docs', href: 'http://localhost:8000/docs' },
-  { label: 'Mailpit', href: 'http://localhost:8025' },
+  { label: 'API docs', href: 'http://127.0.0.1:8000/docs' },
+  { label: 'Mailpit', href: 'http://127.0.0.1:8025' },
 ]
 
 export function AppLayout() {
