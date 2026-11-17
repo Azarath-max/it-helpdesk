@@ -1,7 +1,10 @@
+import { Link } from 'react-router-dom'
 import { Card, RoleBadge } from '../components/ui'
 import { useSession } from '../features/auth/hooks'
+import { useTickets } from '../features/tickets/hooks'
 import { useUsers } from '../features/users/hooks'
 import type { User } from '../features/auth/hooks'
+import { statusLabels } from '../features/tickets/status'
 
 const roleSummary: Record<User['role'], string> = {
   user: 'Create tickets for IT help and follow the ones you own.',
@@ -93,6 +96,63 @@ function AdminAccounts() {
   )
 }
 
+
+function RecentTickets() {
+  const tickets = useTickets({ page: 1, pageSize: 5 })
+
+  return (
+    <section className="space-y-3">
+      <div className="flex items-baseline justify-between">
+        <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-500">
+          Recent tickets
+        </h2>
+        <Link to="/tickets" className="text-xs font-medium text-slate-600 hover:text-slate-900">
+          View all
+        </Link>
+      </div>
+      <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+        {tickets.isPending ? (
+          <p className="px-5 py-6 text-sm text-slate-500">Loading tickets…</p>
+        ) : tickets.isError ? (
+          <p className="px-5 py-6 text-sm text-rose-700">
+            Could not load tickets. {tickets.error.message}
+          </p>
+        ) : tickets.data.items.length === 0 ? (
+          <div className="flex flex-wrap items-center justify-between gap-3 px-5 py-6">
+            <p className="text-sm text-slate-600">No tickets yet.</p>
+            <Link
+              to="/tickets/new"
+              className="rounded-lg bg-slate-900 px-3.5 py-2 text-xs font-semibold text-white transition hover:bg-slate-700"
+            >
+              Create the first one
+            </Link>
+          </div>
+        ) : (
+          <ul className="divide-y divide-slate-100">
+            {tickets.data.items.map((ticket) => (
+              <li key={ticket.id} className="flex flex-wrap items-center justify-between gap-3 px-5 py-3">
+                <div className="min-w-0">
+                  <Link
+                    to={`/tickets/${ticket.id}`}
+                    className="truncate text-sm font-medium text-slate-900 hover:underline"
+                  >
+                    {ticket.title}
+                  </Link>
+                  <p className="font-mono text-xs text-slate-500">{ticket.publicRef}</p>
+                </div>
+                <div className="flex items-center gap-3 text-xs text-slate-600">
+                  <span>{statusLabels[ticket.status]}</span>
+                  <span>{new Date(ticket.updatedAt).toLocaleDateString()}</span>
+                </div>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+    </section>
+  )
+}
+
 export function DashboardPage() {
   const { data: user } = useSession()
 
@@ -146,13 +206,7 @@ export function DashboardPage() {
 
       {user.role === 'admin' ? <AdminAccounts /> : null}
 
-      <section className="rounded-xl border border-dashed border-slate-300 bg-white/60 p-6">
-        <h2 className="text-sm font-semibold text-slate-900">Next: tickets</h2>
-        <p className="mt-1 text-sm text-slate-600">
-          Phase 2 adds scoped ticket creation, lists, filters, and the audit trail. Your
-          account and role are already enforced on the server.
-        </p>
-      </section>
+      <RecentTickets />
     </div>
   )
 }

@@ -163,6 +163,42 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/tickets": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List visible tickets */
+        get: operations["list_tickets_api_tickets_get"];
+        put?: never;
+        /** Create a ticket for the current requester */
+        post: operations["create_ticket_api_tickets_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/tickets/{ticket_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Read one visible ticket */
+        get: operations["get_ticket_api_tickets__ticket_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Edit ticket text fields */
+        patch: operations["update_ticket_api_tickets__ticket_id__patch"];
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -215,6 +251,17 @@ export interface components {
             /** Password */
             password: string;
         };
+        /** Page[TicketRead] */
+        Page_TicketRead_: {
+            /** Items */
+            items: components["schemas"]["TicketRead"][];
+            /** Total */
+            total: number;
+            /** Page */
+            page: number;
+            /** Pagesize */
+            pageSize: number;
+        };
         /** Page[UserRead] */
         Page_UserRead_: {
             /** Items */
@@ -256,6 +303,99 @@ export interface components {
             token: string;
             /** Newpassword */
             newPassword: string;
+        };
+        /** TicketCreate */
+        TicketCreate: {
+            /** Title */
+            title: string;
+            /** Description */
+            description: string;
+            /** @default MEDIUM */
+            priority: components["schemas"]["TicketPriority"];
+            /** Category */
+            category?: string | null;
+        };
+        /**
+         * TicketPriority
+         * @enum {string}
+         */
+        TicketPriority: "LOW" | "MEDIUM" | "HIGH" | "URGENT";
+        /** TicketRead */
+        TicketRead: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Publicref */
+            publicRef: string;
+            /** Title */
+            title: string;
+            /** Description */
+            description: string;
+            status: components["schemas"]["TicketStatus"];
+            priority: components["schemas"]["TicketPriority"];
+            /** Category */
+            category: string | null;
+            source: components["schemas"]["TicketSource"];
+            /** Version */
+            version: number;
+            requester: components["schemas"]["UserBrief"];
+            assignee: components["schemas"]["UserBrief"] | null;
+            /**
+             * Createdat
+             * Format: date-time
+             */
+            createdAt: string;
+            /**
+             * Updatedat
+             * Format: date-time
+             */
+            updatedAt: string;
+            /** Resolvedat */
+            resolvedAt: string | null;
+            /** Closedat */
+            closedAt: string | null;
+            /** Reopencount */
+            reopenCount: number;
+        };
+        /**
+         * TicketSource
+         * @enum {string}
+         */
+        TicketSource: "WEB" | "WEBHOOK";
+        /**
+         * TicketStatus
+         * @description Ticket lifecycle states. Transitions arrive in Phase 3.
+         * @enum {string}
+         */
+        TicketStatus: "OPEN" | "IN_PROGRESS" | "WAITING_ON_USER" | "RESOLVED" | "CLOSED";
+        /** TicketUpdate */
+        TicketUpdate: {
+            /** Title */
+            title?: string | null;
+            /** Description */
+            description?: string | null;
+            /** Category */
+            category?: string | null;
+            /** Version */
+            version: number;
+        };
+        /**
+         * UserBrief
+         * @description Minimal account fields embedded in ticket responses.
+         */
+        UserBrief: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Name */
+            name: string;
+            /** Email */
+            email: string;
+            role: components["schemas"]["UserRole"];
         };
         /**
          * UserRead
@@ -542,6 +682,140 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["Page_UserRead_"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_tickets_api_tickets_get: {
+        parameters: {
+            query?: {
+                status?: components["schemas"]["TicketStatus"] | null;
+                priority?: components["schemas"]["TicketPriority"] | null;
+                q?: string | null;
+                page?: number;
+                pageSize?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Page_TicketRead_"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_ticket_api_tickets_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TicketCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TicketRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_ticket_api_tickets__ticket_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                ticket_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TicketRead"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    update_ticket_api_tickets__ticket_id__patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                ticket_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TicketUpdate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TicketRead"];
                 };
             };
             /** @description Validation Error */

@@ -2,8 +2,8 @@
 
 A single-tenant IT helpdesk ticketing system built as a portfolio project.
 
-**Status:** Phase 1 complete. Accounts, cookie sessions, and role guards are live. Tickets and
-integrations are not implemented yet.
+**Status:** Phase 2 complete. Scoped ticket creation, lists, filters, edits, and an append-only
+audit trail are live. Workflow transitions and comments are next.
 
 ## What works today
 
@@ -14,10 +14,12 @@ integrations are not implemented yet.
 - Registration, login, logout, session-backed `GET /api/auth/me`, and password reset.
 - Argon2id password hashing, opaque session tokens stored as SHA-256 hashes, and a 14-day HttpOnly
   `SameSite=Lax` session cookie.
-- Role-based access control with an admin-only `GET /api/users` paginated endpoint as the first
-  protected surface.
-- A React app with sign-in, registration, forgot/reset password, a protected dashboard, and an
-  admin accounts table.
+- Role-based access control with an admin-only `GET /api/users` paginated endpoint.
+- Scoped ticket CRUD: requesters manage their own tickets, agents and admins see the full queue;
+  status, priority, and text search filters; optimistic-concurrency edits.
+- An append-only `audit_events` table recording ticket creation and edits with before/after diffs.
+- A React app with sign-in, registration, forgot/reset password, a protected dashboard, ticket
+  lists, creation, and detail/editing.
 - Docker Compose for PostgreSQL 18 (host port 5433) and Mailpit.
 - CI for ruff, mypy, pytest, and frontend lint/typecheck/build.
 
@@ -108,5 +110,5 @@ docker-compose.yml
 
 ## Next phase
 
-Phase 2 adds tickets and the audit foundation: scoped ticket CRUD, filters, pagination, and an
-append-only audit trail. See the [MVP plan](docs/mvp-plan.md).
+Phase 3 adds the ticket workflow: enforced status transitions, assignment, comments, and internal
+notes. See the [MVP plan](docs/mvp-plan.md).

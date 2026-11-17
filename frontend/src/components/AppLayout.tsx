@@ -34,9 +34,14 @@ export function AppLayout() {
               Overview
             </NavLink>
             {user ? (
-              <NavLink to="/dashboard" className={navLinkClass}>
-                Dashboard
-              </NavLink>
+              <>
+                <NavLink to="/dashboard" className={navLinkClass}>
+                  Dashboard
+                </NavLink>
+                <NavLink to="/tickets" className={navLinkClass}>
+                  Tickets
+                </NavLink>
+              </>
             ) : null}
             <a
               href="http://127.0.0.1:8000/docs"
